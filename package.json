@@ -27,7 +27,6 @@
   },
   "homepage": "https://github.com/abzico/mpauthx#readme",
   "dependencies": {
-    "redis": "^2.8.0",
-    "sqlite3": "^3.1.13"
+    "redis": "^2.8.0"
   }
 }

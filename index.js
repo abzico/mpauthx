@@ -5,7 +5,6 @@ const valproxy = require('./core/valproxy.js');
 const redis = require('redis');
 let redisClient = null;
 
-const SQLITE3 = require('sqlite3').verbose();
 let db = null;
 
 let cypto = require('crypto');
@@ -240,15 +239,25 @@ function authorize(code, encryptedData, iv) {
 }
 
 /**
+ * Close DB connection.
+ */
+function close() {
+	if (redisClient) {
+		redisClient.quit();
+	}
+}
+
+/**
  * Initialize the module.
  * @param  {string} appid     App id of mini-program
  * @param  {string} appsecret App secret of mini-program
  * @param {string} dbpath SQLite3 DB's path
+ * @param {object} sqlite3DBInstance Instance of SQLite3 DB
  * @param  {string} redispass (optional) Redis pass if you set password for your redis db
  * @param {number} tokenTTL Time-to-live in seconds. When time is up, token is not valid anymore.
  * @return {object}           mpauthx object that has functions ready to be called.
  */
-function init(appid, appsecret, dbpath, redispass=null, tokenTTL=259200) {
+function init(appid, appsecret, dbpath, sqlite3DBInstance, redispass=null, tokenTTL=259200) {
 	valproxy.appid = appid;
 	valproxy.appsecret = appsecret;
 	valproxy.dbpath = dbpath;
@@ -265,11 +274,12 @@ function init(appid, appsecret, dbpath, redispass=null, tokenTTL=259200) {
 
 	return {
 		isTokenValid: isTokenValid,
-		authorize: authorize
+		authorize: authorize,
+		close: close
 	};
 
-	// create db
-	db = new SQLITE3.Database(dbpath);
+	// svae sqlite3 db instance
+	db = sqlite3DBInstance;
 }
 
 module.exports = init;
