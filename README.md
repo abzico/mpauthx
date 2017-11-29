@@ -13,6 +13,8 @@ npm install --save mpauthx
 Then in code, you do this
 
 ```javascript
+let sqlite3DBInstance = ...; // create sqlite3 db instance here
+
 const mpauthx = require('mpauthx')(
 	'<your app-id here>', // app-id
 	'<your app-secret here>', // app-secret
@@ -24,7 +26,7 @@ const mpauthx = require('mpauthx')(
 
 > See _Sqlite3 User Table Schema_ to have a proper sqlite3 table to work with this module.
 
-Call `mpauthx.authorize(code, encryptedData, iv);` whenever your end-point needs to authorize WeChat user logged in from mini-program; treat that `code`, `encryptedData`, and `iv` are information you need to supply. You can get them from [wx.getUserInfo](https://mp.weixin.qq.com/debug/wxadoc/dev/api/open.html#wxgetuserinfoobject).
+Call `mpauthx.authorize(code, encryptedData, iv);` whenever your end-point needs to authorize WeChat user and give user a token so user can save such token for subsequent API calls later in the future.
 
 as well
 
@@ -50,7 +52,7 @@ CREATE TABLE user(
 );
 ```
 
-Primarily focus on `openId` as a requirement to have.
+**Primarily** focus on `openId` as a requirement to have.
 
 # API
 
@@ -65,11 +67,11 @@ Primarily focus on `openId` as a requirement to have.
 
 	Return `Promise` object. Success will contain success object in the following structure  
 
-	```json
+	```javascript
 	{
 		status_code: <number>,	// see core/constants.js or mpauthx.constants for all statuses
 		status_message: <string>,
-		response: <object>
+		response: <string>	// returned generated token for such user
 	}
 	```
 
