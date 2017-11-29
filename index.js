@@ -7,7 +7,7 @@ let redisClient = null;
 
 let db = null;
 
-let cypto = require('crypto');
+let crypto = require('crypto');
 let WXBizDataCrypt = require('./vendor/WXBizDataCrypt.js');
 let request = require('./net/request.js');
 let userTokenPartSeparator = '|';
