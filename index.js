@@ -270,14 +270,14 @@ function init(appid, appsecret, sqlite3DBInstance, redispass=null, tokenTTL=2592
 		redisClient = redis.createClient();
 	}
 
+	// save sqlite3 db instance
+	db = sqlite3DBInstance;
+
 	return {
 		isTokenValid: isTokenValid,
 		authorize: authorize,
 		close: close
 	};
-
-	// svae sqlite3 db instance
-	db = sqlite3DBInstance;
 }
 
 module.exports = init;
