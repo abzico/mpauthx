@@ -251,16 +251,14 @@ function close() {
  * Initialize the module.
  * @param  {string} appid     App id of mini-program
  * @param  {string} appsecret App secret of mini-program
- * @param {string} dbpath SQLite3 DB's path
  * @param {object} sqlite3DBInstance Instance of SQLite3 DB
  * @param  {string} redispass (optional) Redis pass if you set password for your redis db
  * @param {number} tokenTTL Time-to-live in seconds. When time is up, token is not valid anymore.
  * @return {object}           mpauthx object that has functions ready to be called.
  */
-function init(appid, appsecret, dbpath, sqlite3DBInstance, redispass=null, tokenTTL=259200) {
+function init(appid, appsecret, sqlite3DBInstance, redispass=null, tokenTTL=259200) {
 	valproxy.appid = appid;
 	valproxy.appsecret = appsecret;
-	valproxy.dbpath = dbpath;
 	valproxy.redispass = redispass;
 	valproxy.tokenTTL = tokenTTL;
 

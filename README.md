@@ -16,7 +16,7 @@ Then in code, you do this
 const mpauthx = require('mpauthx')(
 	'<your app-id here>', // app-id
 	'<your app-secret here>', // app-secret
-	'./test-db.db', 	// sqlite3 db path
+	sqlite3DBInstance, 	// your instance of sqlite3
 	null, // redis pass (if any), if none pass null
 	259200 // TTL for token, in seconds
 );
@@ -51,14 +51,6 @@ CREATE TABLE user(
 ```
 
 Primarily focus on `openId` as a requirement to have.
-
-# Test
-
-There're test-cases inside `tests/` directory. You can take a look.
-
-It has a testing sqlite3 dabased namedly `test-db.db`, you can even take a peek of its structure inside.
-
-Start testing by executing `npm test`.
 
 # License
 
