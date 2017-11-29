@@ -52,6 +52,43 @@ CREATE TABLE user(
 
 Primarily focus on `openId` as a requirement to have.
 
+# API
+
+## Functions
+
+* `isTokenValid(token)` - check whether token is valid
+
+	Return `Promise` object.  
+	`token` is `string` for specified token to check whether such token is valid or not. This means it's valid when it still exists and has exact match.
+
+* `authorize(code, encryptedData, iv)` - authorize WeChat user after logged in mini-program
+
+	Return `Promise` object. Success will contain success object in the following structure  
+
+	```json
+	{
+		status_code: <number>,	// see core/constants.js or mpauthx.constants for all statuses
+		status_message: <string>,
+		response: <object>
+	}
+	```
+
+	Otherwise failure will contains `Error` object with `code` as additional property. See `core/constants.js` or `mpauthx.constants` for all status code.
+
+	`code` can be acquired via [wx.login API](https://mp.weixin.qq.com/debug/wxadoc/dev/api/api-login.html#wxloginobject).
+
+	`encryptedData` and `iv` can be acquired via [wx.getUserInfo API](https://mp.weixin.qq.com/debug/wxadoc/dev/api/open.html#wxgetuserinfoobject).
+
+* `extractOpenId(token)` - extract openId part of specified token
+
+	Return openId part of specified token.
+
+* `close()` - close redis connection
+
+## Properties
+
+* `constants` - expose constants mainly used for status code returned from API especially `authorize`.
+
 # License
 
 [Apache License 2.0](https://github.com/abzico/mpauthx/blob/master/LICENSE), [abzi.co](https://abzi.co)  

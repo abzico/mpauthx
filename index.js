@@ -292,7 +292,8 @@ function init(appid, appsecret, sqlite3DBInstance, redispass=null, tokenTTL=2592
 		isTokenValid: isTokenValid,
 		authorize: authorize,
 		extractOpenId: extractOpenId,
-		close: close
+		close: close,
+		constants: constants
 	};
 }
 
