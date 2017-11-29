@@ -91,6 +91,10 @@ CREATE TABLE user(
 
 * `constants` - expose constants mainly used for status code returned from API especially `authorize`.
 
+# Roadmap
+
+* [ ] Create a middleware for flexibly plug-in of non-redis DB checking for user record. Currently it's fixed to be used with redis.
+
 # License
 
 [Apache License 2.0](https://github.com/abzico/mpauthx/blob/master/LICENSE), [abzi.co](https://abzi.co)  
