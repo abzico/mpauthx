@@ -168,8 +168,7 @@ function authorize(code, encryptedData, iv) {
 						db.all(`SELECT * FROM user WHERE openId LIKE '${offline_openId}'`, function(e, rows) {
 							if (e) {
 								console.log(`error select redis: ${e.message}`);
-								// resolve with success object
-								resolve(util.createSuccessObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
+								reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
 								return;
 							}
 							else {
