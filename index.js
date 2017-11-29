@@ -55,6 +55,22 @@ function generateSessionIdenPart(timestamp) {
 }
 
 /**
+ * Generate token.
+ * It consists of 2 parts
+ *     - user -> uses openId to identify which user such token is
+ *     - session -> sha256(concat(timestamp, nouce)) -> used to uniquely differentiate between session
+ * ps. nouce is random string in length 6.
+ *
+ */
+function generateToken(openId, timestamp) {
+	var userIdenPart = generateUserIdenPart(openId);
+	var sessionIdenPart = generateSessionIdenPart(timestamp);
+	console.log('userIdenPart: ' + userIdenPart);
+	console.log('sessionIdenPart: ' + sessionIdenPart);
+	return userIdenPart + userTokenPartSeparator + sessionIdenPart;
+}
+
+/**
  * Extract openId from specified token.
  * 
  * @param  {string} userToken Token string to extract openId from
