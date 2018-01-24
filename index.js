@@ -165,11 +165,12 @@ function authorize(code, encryptedData, iv) {
 				}
 
 				// otherwise continue
-				// 4. Then it checks first whether such openId is already granted with access token in redis db.
+        // 4. Then it checks first whether such openId is already granted with access token in redis db for its associated sku only.
+        // Imagine that app can have both debug and production version thus we allow 2 instances of token to be found, one for each version.
 				// [as first part of digested message can be used to identify user through openId, then we search through
 				// all keys. Only 1 session will be allowed.]
 				var userIdenPart = generateUserIdenPart(offline_openId);
-				redisClient.keys(`${userIdenPart}*`, function(err, replies) {
+				redisClient.keys(`${userIdenPart}|${valproxy.sku}|*`, function(err, replies) {
 					if (err) {
 						console.log('DB error in searching for user\'s active session in redis');
 						reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `DB Error in searching for user's active sessions: ${err.message}`));
@@ -183,7 +184,7 @@ function authorize(code, encryptedData, iv) {
 						return;
 					}
 					else if (replies != null && replies.length == 0) {
-						// - Otherwise, it checks against user table in sqlite3 db whether or not to register user as a new record.
+						// - Otherwise, it checks against user table in sqlite3 db whether or not it needs to register user as a new record.
 						// [there's no active session, then create one]
 						db.all(`SELECT * FROM user WHERE openId LIKE '${offline_openId}'`, function(e, rows) {
 							if (e) {
