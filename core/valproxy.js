@@ -1,6 +1,6 @@
 module.exports = {
 	appid: null,
-	appsecret: null,
+  appsecret: null,
 	redispass: null,
 	tokenTTL: null
 };

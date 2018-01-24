@@ -56,18 +56,21 @@ function generateSessionIdenPart(timestamp) {
 
 /**
  * Generate token.
- * It consists of 2 parts
+ * It consists of 3 parts
  *     - user -> uses openId to identify which user such token is
+ *     - sku -> uses as it is
  *     - session -> sha256(concat(timestamp, nouce)) -> used to uniquely differentiate between session
  * ps. nouce is random string in length 6.
- *
+ * 
+ * The final result would be
+ *  openid|sku|session
  */
 function generateToken(openId, timestamp) {
-	var userIdenPart = generateUserIdenPart(openId);
+  var userIdenPart = generateUserIdenPart(openId);
 	var sessionIdenPart = generateSessionIdenPart(timestamp);
 	console.log('userIdenPart: ' + userIdenPart);
 	console.log('sessionIdenPart: ' + sessionIdenPart);
-	return userIdenPart + userTokenPartSeparator + sessionIdenPart;
+	return userIdenPart + userTokenPartSeparator + valproxy.sku + userTokenPartSeparator + sessionIdenPart;
 }
 
 /**
@@ -78,6 +81,23 @@ function generateToken(openId, timestamp) {
  */
 function extractOpenId(userToken) {
 	return userToken.substring(0, userToken.indexOf(userTokenPartSeparator));
+}
+
+/**
+ * Extract sku from specified token.
+ * @param {string} userToken Token string to extract sku from
+ * @return {string} Extracted sku string. Return null when token is invalid.
+ */
+function extractSku(userToken) {
+  // split token into 3 parts
+  var parts = userToken.split(userTokenPartSeparator);
+  if (parts.length == 3) {
+    // return the second part
+    return parts[1];
+  }
+  else {
+    return null;
+  }
 }
 
 /**
@@ -266,14 +286,16 @@ function close() {
  * Initialize the module.
  * @param  {string} appid     App id of mini-program
  * @param  {string} appsecret App secret of mini-program
+ * @param {string}  sku Sku for generated token to be associated with. This will help differentiated when inspect redis db later by admin. Recommend to specify it uniquely from other projects you have. But not mandatory.
  * @param {object} sqlite3DBInstance Instance of SQLite3 DB
  * @param  {string} redispass (optional) Redis pass if you set password for your redis db
  * @param {number} tokenTTL Time-to-live in seconds. When time is up, token is not valid anymore.
  * @return {object}           mpauthx object that has functions ready to be called.
  */
-function init(appid, appsecret, sqlite3DBInstance, redispass=null, tokenTTL=259200) {
+function init(appid, appsecret, sku, sqlite3DBInstance, redispass=null, tokenTTL=259200) {
 	valproxy.appid = appid;
-	valproxy.appsecret = appsecret;
+  valproxy.appsecret = appsecret;
+  valproxy.sku = sku;
 	valproxy.redispass = redispass;
 	valproxy.tokenTTL = tokenTTL;
 
