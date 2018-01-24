@@ -17,7 +17,8 @@ let sqlite3DBInstance = ...; // create sqlite3 db instance here
 
 const mpauthx = require('mpauthx')(
 	'<your app-id here>', // app-id
-	'<your app-secret here>', // app-secret
+  '<your app-secret here>', // app-secret
+  '<your sku here>', // sku
 	sqlite3DBInstance, 	// your instance of sqlite3
 	null, // redis pass (if any), if none pass null
 	259200 // TTL for token, in seconds
@@ -84,6 +85,10 @@ CREATE TABLE user(
 * `extractOpenId(token)` - extract openId part of specified token
 
 	Return openId part of specified token.
+
+* `extractSku(token)` - extract sku part of specified token
+
+  Return sku part of specified token.
 
 * `close()` - close redis connection
 
