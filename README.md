@@ -55,6 +55,8 @@ CREATE TABLE user(
 
 **Primarily** focus on `openId` as a requirement to have.
 
+## OpenId & UnionId
+
 Also `openId` is umbrella word to represent either openid or unionid. If your app has been setup to work with unionid, then mpauthx will automatically use that instead of openid. This will allow you to peek database for users related to all apps across your company's WeChat Official Account.
 
 # API
@@ -72,7 +74,7 @@ Also `openId` is umbrella word to represent either openid or unionid. If your ap
 
 	```javascript
 	{
-		status_code: <number>,	// see core/constants.js or mpauthx.constants for all statuses
+	    status_code: <number>,	// see core/constants.js or mpauthx.constants for all statuses
 		status_message: <string>,
 		response: <string>	// returned generated token for such user
 	}
@@ -87,6 +89,7 @@ Also `openId` is umbrella word to represent either openid or unionid. If your ap
 * `extractOpenId(token)` - extract openId part of specified token
 
 	Return openId part of specified token.
+    Note that openId is umbrella word to represent either openId or unionId. See OpenId & UnionId.
 
 * `extractSku(token)` - extract sku part of specified token
 
