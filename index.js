@@ -12,6 +12,8 @@ let WXBizDataCrypt = require('./vendor/WXBizDataCrypt.js');
 let request = require('./net/request.js');
 let userTokenPartSeparator = '|';
 
+const WXDecoder = require('./vendor/wxdecoder.js');
+
 /**
  * Ad-hoc checking whether token is valid or not.
  *
@@ -144,23 +146,33 @@ function authorize(code, encryptedData, iv) {
 		// note: value of variable is processed inside `` here.
 		request.getJsonAsync(`https://api.weixin.qq.com/sns/jscode2session?appid=${valproxy.appid}&secret=${valproxy.appsecret}&js_code=${code}&grant_type=authorization_code`)
 			.then(function(jsonRes) {
-				console.log(jsonRes);
-				// get session key, and openid for checking later
-				var online_sessionKey = jsonRes.session_key;
-				var online_openId = jsonRes.openid;
+        console.log(jsonRes);
+        
+        var online_sessionKey = jsonRes.session_key;
+        var online_openIdOrUnionIdIfAvailable = jsonRes.openid;
+        // support union id as well, in case the app is configured and bound to support it
+        if (jsonRes.unionid != null) {
+          // use unionid instead
+          // this will also make use insert unionid in db
+          online_openIdOrUnionIdIfAvailable = jsonRes.unionid;
+        }
 
 				// 2. It will extract openId from those input offline using appId + sessionKey + encryptedData + iv.
 				var pc = new WXBizDataCrypt(valproxy.appid, online_sessionKey);
-				var data = pc.decryptData(encryptedData, iv);
-				var offline_openId = data.openId;
+        var data = pc.decryptData(encryptedData, iv);
 
-				console.log(offline_openId);
+        var offline_openIdOrUnionIdIfAvailable = data.openId;
+        if (data.unionId != null) {
+          offline_openIdOrUnionIdIfAvailable = data.unionId;
+        }
+
+				console.log(data);
 
 				// 3. Check whether two openId matches, if not response with error. Otherwise continue.
-				if (online_openId !== offline_openId) {
-					console.log('OpenID not match');
+				if (online_openIdOrUnionIdIfAvailable !== offline_openIdOrUnionIdIfAvailable) {
+					console.log('OpenID or UnionID not match');
 					// reject with error object
-					reject(util.createErrorObject(constants.statusCode.openIdNotMatch, 'OpenID not match'));
+					reject(util.createErrorObject(constants.statusCode.openIdOrUnionIdNotMatch, 'OpenID or UnionID not match'));
 					return;
 				}
 
@@ -169,7 +181,7 @@ function authorize(code, encryptedData, iv) {
         // Imagine that app can have both debug and production version thus we allow 2 instances of token to be found, one for each version.
 				// [as first part of digested message can be used to identify user through openId, then we search through
 				// all keys. Only 1 session will be allowed.]
-				var userIdenPart = generateUserIdenPart(offline_openId);
+				var userIdenPart = generateUserIdenPart(offline_openIdOrUnionIdIfAvailable);
 				redisClient.keys(`${userIdenPart}|${valproxy.sku}|*`, function(err, replies) {
 					if (err) {
 						console.log('DB error in searching for user\'s active session in redis');
@@ -186,7 +198,7 @@ function authorize(code, encryptedData, iv) {
 					else if (replies != null && replies.length == 0) {
 						// - Otherwise, it checks against user table in sqlite3 db whether or not it needs to register user as a new record.
 						// [there's no active session, then create one]
-						db.all(`SELECT * FROM user WHERE openId LIKE '${offline_openId}'`, function(e, rows) {
+						db.all(`SELECT * FROM user WHERE openId LIKE '${offline_openIdOrUnionIdIfAvailable}'`, function(e, rows) {
 							if (e) {
 								console.log(`error select redis: ${e.message}`);
 								reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
@@ -197,7 +209,7 @@ function authorize(code, encryptedData, iv) {
 								// [if records are empty, then we need to register such user]
 								if (rows == null || (rows != null && rows.length == 0)) {
 									console.log('3');
-									db.run(`INSERT INTO user (openId) values ('${online_openId}')`, function(e) {
+									db.run(`INSERT INTO user (openId) values ('${offline_openIdOrUnionIdIfAvailable}')`, function(e) {
 										if (e) {
 											console.log(`error insert ${e.message}`);
 											reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
@@ -207,7 +219,7 @@ function authorize(code, encryptedData, iv) {
 											console.log('generate token');
 											// generate token
 											var timestamp = Date.now();
-											var token = generateToken(offline_openId, timestamp);
+											var token = generateToken(offline_openIdOrUnionIdIfAvailable, timestamp);
 											redisClient.hmset(token, { ctime: timestamp }, function(e, reply) {
 												if (e) {
 													reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
@@ -215,7 +227,7 @@ function authorize(code, encryptedData, iv) {
 												}
 												else {
 													// set expire
-													redisClient.expire(offline_openId, valproxy.tokenTTL);
+													redisClient.expire(offline_openIdOrUnionIdIfAvailable, valproxy.tokenTTL);
 
 													// respond back with generated token
 													// we're done here
@@ -233,7 +245,7 @@ function authorize(code, encryptedData, iv) {
 									console.log('case 2');
 									// generate token
 									var timestamp = Date.now();
-									var token = generateToken(offline_openId, timestamp);
+									var token = generateToken(offline_openIdOrUnionIdIfAvailable, timestamp);
 									redisClient.hmset(token, { ctime: timestamp }, function(e, reply) {
 										if (e) {
 											reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
@@ -241,7 +253,7 @@ function authorize(code, encryptedData, iv) {
 										}
 										else {
 											// set expire
-											redisClient.expire(offline_openId, valproxy.tokenTTL);
+											redisClient.expire(offline_openIdOrUnionIdIfAvailable, valproxy.tokenTTL);
 
 											// respond back with generated token
 											// we're done here
