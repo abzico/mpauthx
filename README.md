@@ -55,6 +55,8 @@ CREATE TABLE user(
 
 **Primarily** focus on `openId` as a requirement to have.
 
+Also `openId` is umbrella word to represent either openid or unionid. If your app has been setup to work with unionid, then mpauthx will automatically use that instead of openid. This will allow you to peek database for users related to all apps across your company's WeChat Official Account.
+
 # API
 
 ## Functions
