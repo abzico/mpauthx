@@ -12,8 +12,6 @@ let WXBizDataCrypt = require('./vendor/WXBizDataCrypt.js');
 let request = require('./net/request.js');
 let userTokenPartSeparator = '|';
 
-const WXDecoder = require('./vendor/wxdecoder.js');
-
 /**
  * Ad-hoc checking whether token is valid or not.
  *
