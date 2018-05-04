@@ -11,7 +11,7 @@ module.exports = {
 		internetConnectionError: 6006,
 		invalidAccessToken: 6007,
 		sessionKeyAndOpenIdRequestError: 6008,
-		openIdNotMatch: 6009,
+    openIdOrUnionIdNotMatch: 6009,
 		unknownError: 9999
 	}
 }
