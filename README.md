@@ -95,6 +95,22 @@ Also `openId` is umbrella word to represent either openid or unionid. If your ap
 
 	`encryptedData` and `iv` can be acquired via [wx.getUserInfo API](https://mp.weixin.qq.com/debug/wxadoc/dev/api/open.html#wxgetuserinfoobject).
 
+* `refreshToken(userId)` - request to refresh token for input user id (which represents either openid or unionid)
+
+    Return `Promise` object. Success will contain a new generated and assigned access token for such user.
+
+    ```javascript
+    {
+        status_code: <number>,
+        status_message: <sring>,
+        response: <string> // your new access token
+    }
+    ```
+
+    Otherwise failure will contains `Error` object.
+
+    `userId` as input should be known from client side as they should persist such value and always try to use such access token in API request before automatically detected by API if it needs to be re-generated.
+
 * `extractOpenId(token)` - extract openId part of specified token
 
 	Return openId part of specified token.
