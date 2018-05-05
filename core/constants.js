@@ -12,6 +12,8 @@ module.exports = {
 		invalidAccessToken: 6007,
 		sessionKeyAndOpenIdRequestError: 6008,
     openIdOrUnionIdNotMatch: 6009,
+    userNotExistInDB: 6010,
+    userInfoDecryptionError: 6011,
 		unknownError: 9999
 	}
 }
