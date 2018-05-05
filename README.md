@@ -2,6 +2,13 @@
 
 Token giver for Users logged in to WeChat Mini-program. Based on top of redis for fast token checking/access, and sqlite3 for flexible user db storage.
 
+# Features
+
+* Generate and assign an access token to each user for attached project (`sku`) supporting multiple devices
+* Provide functionality to initially and firstly register user via our user database (sqlite) via `authorize(code, encryptedData, iv)` function
+* Provide functionality to refresh access token only if user knows its own user id (either openId or unionId) via `refreshToken()` function
+* Each access token comes with configurabe TTL (time-to-live) thus when it's expired, such token will be deleted from redis db automatically.
+
 # How-To
 
 Install `mpauthx` by executing the following
@@ -27,7 +34,9 @@ const mpauthx = require('mpauthx')(
 
 > See _Sqlite3 User Table Schema_ to have a proper sqlite3 table to work with this module.
 
-Call `mpauthx.authorize(code, encryptedData, iv);` whenever your end-point needs to authorize WeChat user and give user a token so user can save such token for subsequent API calls later in the future.
+Call `mpauthx.authorize(code, encryptedData, iv)` whenever your end-point needs to authorize WeChat user and give user a token so user can save such token for subsequent API calls later in the future.
+
+Call `mpauthx.refreshToken(userId)` whenever you want to refresh token. If previously assigned token to such user exists, then it will be invalidated before generating and assigning new one. Client side should persist such token value and make use of it first to see if it is still not expired.
 
 as well
 

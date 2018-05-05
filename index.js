@@ -157,7 +157,16 @@ function authorize(code, encryptedData, iv) {
 
 				// 2. It will extract openId from those input offline using appId + sessionKey + encryptedData + iv.
 				var pc = new WXBizDataCrypt(valproxy.appid, online_sessionKey);
-        var data = pc.decryptData(encryptedData, iv);
+        var data = null;
+        
+        // try to decrypt userInfo, if error then return now
+        try {
+          data = pc.decryptData(encryptedData, iv);
+        } catch (err) {
+          console.log('userInfo decryption error');
+          reject(util.createErrorObject(constants.statusCode.userInfoDecryptionError, 'Decrypt userInfo error'));
+          return;
+        }
 
         var offline_openIdOrUnionIdIfAvailable = data.openId;
         if (data.unionId != null) {
@@ -225,7 +234,7 @@ function authorize(code, encryptedData, iv) {
 												}
 												else {
 													// set expire
-													redisClient.expire(offline_openIdOrUnionIdIfAvailable, valproxy.tokenTTL);
+													redisClient.expire(token, valproxy.tokenTTL);
 
 													// respond back with generated token
 													// we're done here
@@ -251,7 +260,7 @@ function authorize(code, encryptedData, iv) {
 										}
 										else {
 											// set expire
-											redisClient.expire(offline_openIdOrUnionIdIfAvailable, valproxy.tokenTTL);
+											redisClient.expire(token, valproxy.tokenTTL);
 
 											// respond back with generated token
 											// we're done here
@@ -282,6 +291,112 @@ function authorize(code, encryptedData, iv) {
 				return;
 			});
 	});
+}
+
+/**
+ * Get a new access token.
+ * 
+ * It will invalidate previous acquired access token for input userid (either openid or unionid) only for attached app then generate a new one.
+ * 
+ * @param  {String} userid          User id either is openid or unionid
+ * @return {Object}               Promise object. Success contains a new access token string, failure contains Error object with code property for reason of why it fails.
+ */
+function refreshToken(userId) {
+  return new Promise((resolve, reject) => {
+		// check required params, missing or not
+		if (userId == null) {
+			// reject with error object
+			reject(util.createErrorObject(constants.statusCode.requiredParamsMissingError, 'Missing userId parameter'));
+			// return immediately
+			return;
+    }
+
+    // check in db first whether user exists
+    db.all(`SELECT * FROM user WHERE openId LIKE '${userId}'`, function(e, rows) {
+      if (e) {
+        console.log(`error select redis: ${e.message}`);
+        reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
+        return;
+      }
+      else {
+        // not exist, then return error
+        if (rows == null || (rows != null && rows.length == 0)) {
+          reject(util.createErrorObject(constants.statusCode.userNotExistInDB, 'Cannot find such user in DB'));
+          return;
+        }
+        // exist, and it should only have 1 record
+        else if (rows != null && rows.length == 1) {
+          console.log('here');
+          // continue operation
+          // find userid in redisdb, if found we will remove it to invalidate that token
+          redisClient.keys(`${userId}|${valproxy.sku}|*`, function(err, replies) {
+            // error
+            if (err) {
+              console.log('error 1', err);
+              reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${err.message}`));
+              return;
+            }
+            console.log('replies: ', replies);
+            // delete existing records if any
+            if (replies.length > 0) {
+              // remove all existing records, should have only 1
+              redisClient.del(replies, function(err, res) {
+                // error
+                if (err) {
+                  console.log('error 2-1', err);
+                  reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${err.message}`));
+                  return;
+                }
+
+                // if done, then generate a new access token
+                let timestamp = Date.now();
+                let token = generateToken(userId, timestamp);
+                  redisClient.hmset(token, { ctime: timestamp }, function(e, reply) {
+                    if (e) {
+                      console.log('error 3-1', err);
+                      reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
+                      return;
+                    }
+
+                    console.log('ok now 1: ' + token);
+
+                    // set TTL
+                    redisClient.expire(token, valproxy.tokenTTL);
+                    resolve(util.createSuccessObject(constants.statusCode.success, 'OK', token));
+                    return;
+                  });
+              });
+            }
+            // generate
+            else {
+              // if done, then generate a new access token
+              let timestamp = Date.now();
+              let token = generateToken(userId, timestamp);
+              redisClient.hmset(token, { ctime: timestamp }, function(e, reply) {
+                if (e) {
+                  console.log('error 3-2', err);
+                  reject(util.createErrorObject(constants.statusCode.databaseRelatedError, `Error: ${e.message}`));
+                  return;
+                }
+
+                console.log('ok now 2: ' + token);
+
+                // set TTL
+                redisClient.expire(token, valproxy.tokenTTL);
+                resolve(util.createSuccessObject(constants.statusCode.success, 'OK', token));
+                return;
+              });
+            }
+          });
+        }
+        // should not happen
+        else {
+          reject(util.createErrorObject(constants.statusCode.unknownError, 'Unknown error after finding user record from db'));
+          return;
+        }
+      }
+    });
+  });
 }
 
 /**
@@ -323,7 +438,8 @@ function init(appid, appsecret, sku, sqlite3DBInstance, redispass=null, tokenTTL
 
 	return {
 		isTokenValid: isTokenValid,
-		authorize: authorize,
+    authorize: authorize,
+    refreshToken: refreshToken,
 		extractOpenId: extractOpenId,
 		close: close,
 		constants: constants
