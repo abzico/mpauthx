@@ -145,15 +145,9 @@ function authorize(code, encryptedData, iv) {
 		request.getJsonAsync(`https://api.weixin.qq.com/sns/jscode2session?appid=${valproxy.appid}&secret=${valproxy.appsecret}&js_code=${code}&grant_type=authorization_code`)
 			.then(function(jsonRes) {
         console.log(jsonRes);
-        
+
+        // get session key
         var online_sessionKey = jsonRes.session_key;
-        var online_openIdOrUnionIdIfAvailable = jsonRes.openid;
-        // support union id as well, in case the app is configured and bound to support it
-        if (jsonRes.unionid != null) {
-          // use unionid instead
-          // this will also make use insert unionid in db
-          online_openIdOrUnionIdIfAvailable = jsonRes.unionid;
-        }
 
 				// 2. It will extract openId from those input offline using appId + sessionKey + encryptedData + iv.
 				var pc = new WXBizDataCrypt(valproxy.appid, online_sessionKey);
@@ -176,7 +170,8 @@ function authorize(code, encryptedData, iv) {
 				console.log(data);
 
 				// 3. Check whether two openId matches, if not response with error. Otherwise continue.
-				if (online_openIdOrUnionIdIfAvailable !== offline_openIdOrUnionIdIfAvailable) {
+				// we just check open id pair (not union id) as if someone not follow official account, then its union id won't be present
+				if (jsonRes.openId !== data.openId) {
 					console.log('OpenID or UnionID not match');
 					// reject with error object
 					reject(util.createErrorObject(constants.statusCode.openIdOrUnionIdNotMatch, 'OpenID or UnionID not match'));
