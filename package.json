@@ -1,6 +1,6 @@
 {
   "name": "mpauthx",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "description": "Token giver for Users logged in to WeChat Mini-program. Based on top of redis for fast token checking/access, and sqlite3 for flexible user db storage.",
   "main": "index.js",
   "scripts": {
