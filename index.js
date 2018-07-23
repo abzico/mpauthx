@@ -171,7 +171,7 @@ function authorize(code, encryptedData, iv) {
 
 				// 3. Check whether two openId matches, if not response with error. Otherwise continue.
 				// we just check open id pair (not union id) as if someone not follow official account, then its union id won't be present
-				if (jsonRes.openId !== data.openId) {
+				if (jsonRes.openid !== data.openId) {
 					console.log('OpenID or UnionID not match');
 					// reject with error object
 					reject(util.createErrorObject(constants.statusCode.openIdOrUnionIdNotMatch, 'OpenID or UnionID not match'));
